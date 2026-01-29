@@ -2,5 +2,4 @@
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "packwerk_slim"
-
 require "minitest/autorun"

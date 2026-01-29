@@ -1,0 +1,3 @@
+# Mock package.yml for testing
+dependencies:
+  - components/shared
