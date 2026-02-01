@@ -1,0 +1,10 @@
+h1 User Profile
+
+.user-info
+  = User.find(params[:id]).name
+  = User.email
+
+.orders
+  - Order::Service.recent_orders.each do |order|
+    .order
+      = order.number
