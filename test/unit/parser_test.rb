@@ -10,7 +10,7 @@ class ParserTest < Minitest::Test
     SLIM
 
     io = StringIO.new(slim_content)
-    parser = PackwerkSlim::Parser.new
+    parser = PackwerkSlimTemplate::Parser.new
 
     ast = parser.call(io: io, file_path: "test.slim")
 
@@ -29,7 +29,7 @@ class ParserTest < Minitest::Test
     SLIM
 
     io = StringIO.new(slim_content)
-    parser = PackwerkSlim::Parser.new
+    parser = PackwerkSlimTemplate::Parser.new
 
     ast = parser.call(io: io, file_path: "test.slim")
 
@@ -38,7 +38,7 @@ class ParserTest < Minitest::Test
 
   def test_call_handles_empty_slim_file
     io = StringIO.new("")
-    parser = PackwerkSlim::Parser.new
+    parser = PackwerkSlimTemplate::Parser.new
 
     ast = parser.call(io: io, file_path: "empty.slim")
 
@@ -50,7 +50,7 @@ class ParserTest < Minitest::Test
 
     parser = factory.for_path("app/views/test.slim")
 
-    assert_instance_of PackwerkSlim::Parser, parser
+    assert_instance_of PackwerkSlimTemplate::Parser, parser
   end
 
   def test_factory_still_recognizes_ruby_files

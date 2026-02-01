@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-require_relative "lib/packwerk_slim/version"
+require_relative "lib/packwerk_slim_template/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "packwerk_slim"
-  spec.version = PackwerkSlim::VERSION
+  spec.name = "packwerk_slim_template"
+  spec.version = PackwerkSlimTemplate::VERSION
   spec.authors = ["Yuji Yaginuma"]
   spec.email = ["yuuji.yaginuma@gmail.com"]
 
   spec.summary = "Slim support for packwerk"
-  spec.homepage = "https://github.com/y-yagi/packwerk_slim"
+  spec.homepage = "https://github.com/y-yagi/packwerk_slim_template"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
 

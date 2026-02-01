@@ -3,7 +3,7 @@
 require "packwerk"
 require "stringio"
 
-module PackwerkSlim
+module PackwerkSlimTemplate
   class Parser
     include Packwerk::Parsers::ParserInterface
 
@@ -42,16 +42,16 @@ module PackwerkSlim
   end
 end
 
-module PackwerkSlim
+module PackwerkSlimTemplate
   module FactoryExtension
     SLIM_REGEX = /\.slim\Z/
 
     def for_path(path)
-      return @slim_parser ||= PackwerkSlim::Parser.new if SLIM_REGEX.match?(path)
+      return @slim_parser ||= PackwerkSlimTemplate::Parser.new if SLIM_REGEX.match?(path)
 
       super
     end
   end
 end
 
-Packwerk::Parsers::Factory.prepend(PackwerkSlim::FactoryExtension)
+Packwerk::Parsers::Factory.prepend(PackwerkSlimTemplate::FactoryExtension)

@@ -4,7 +4,7 @@ require "test_helper"
 
 class ErrorsTest < Minitest::Test
   def test_slim_syntax_error_with_all_attributes
-    error = PackwerkSlim::SlimSyntaxError.new(
+    error = PackwerkSlimTemplate::SlimSyntaxError.new(
       "Invalid syntax",
       file_path: "app/views/test.slim",
       line_number: 15,
@@ -18,7 +18,7 @@ class ErrorsTest < Minitest::Test
   end
 
   def test_slim_syntax_error_without_column
-    error = PackwerkSlim::SlimSyntaxError.new(
+    error = PackwerkSlimTemplate::SlimSyntaxError.new(
       "Missing end tag",
       file_path: "app/views/test.slim",
       line_number: 20
@@ -31,7 +31,7 @@ class ErrorsTest < Minitest::Test
   end
 
   def test_slim_syntax_error_with_only_file_path
-    error = PackwerkSlim::SlimSyntaxError.new(
+    error = PackwerkSlimTemplate::SlimSyntaxError.new(
       "Parse failed",
       file_path: "app/views/test.slim"
     )

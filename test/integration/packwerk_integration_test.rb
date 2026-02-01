@@ -4,9 +4,9 @@ require "test_helper"
 
 class PackwerkIntegrationTest < Minitest::Test
   def test_parser_implements_packwerk_interface
-    parser = PackwerkSlim::Parser.new
+    parser = PackwerkSlimTemplate::Parser.new
     assert_respond_to parser, :call
-    assert_includes PackwerkSlim::Parser.included_modules, Packwerk::Parsers::ParserInterface
+    assert_includes PackwerkSlimTemplate::Parser.included_modules, Packwerk::Parsers::ParserInterface
   end
 
   def test_full_slim_to_ast_conversion
@@ -18,7 +18,7 @@ class PackwerkIntegrationTest < Minitest::Test
     SLIM
 
     io = StringIO.new(slim_content)
-    parser = PackwerkSlim::Parser.new
+    parser = PackwerkSlimTemplate::Parser.new
 
     ast = parser.call(io: io, file_path: "test.slim")
 
@@ -36,7 +36,7 @@ class PackwerkIntegrationTest < Minitest::Test
 
     # Test Slim parser is registered
     slim_parser = factory.for_path("views/test.slim")
-    assert_instance_of PackwerkSlim::Parser, slim_parser
+    assert_instance_of PackwerkSlimTemplate::Parser, slim_parser
 
     # Test existing parsers still work
     ruby_parser = factory.for_path("models/user.rb")
@@ -50,7 +50,7 @@ class PackwerkIntegrationTest < Minitest::Test
     slim_content = "= 1 +"
 
     io = StringIO.new(slim_content)
-    parser = PackwerkSlim::Parser.new
+    parser = PackwerkSlimTemplate::Parser.new
 
     error = assert_raises(Packwerk::Parsers::ParseError) do
       parser.call(io: io, file_path: "bad.slim")

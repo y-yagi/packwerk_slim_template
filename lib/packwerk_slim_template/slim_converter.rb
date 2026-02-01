@@ -2,7 +2,7 @@
 
 require "slim"
 
-module PackwerkSlim
+module PackwerkSlimTemplate
   class LineMapper
     def initialize
       @mappings = {}

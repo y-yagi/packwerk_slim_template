@@ -9,10 +9,10 @@ class SlimConverterTest < Minitest::Test
       = User.find(1)
     SLIM
 
-    result = PackwerkSlim::SlimConverter.convert(slim_content, file_path: "test.slim")
+    result = PackwerkSlimTemplate::SlimConverter.convert(slim_content, file_path: "test.slim")
 
     assert_includes result.ruby_code, "User"
-    assert_kind_of PackwerkSlim::LineMapper, result.line_mapper
+    assert_kind_of PackwerkSlimTemplate::LineMapper, result.line_mapper
   end
 
   def test_convert_with_control_flow
@@ -21,13 +21,13 @@ class SlimConverterTest < Minitest::Test
         p Welcome
     SLIM
 
-    result = PackwerkSlim::SlimConverter.convert(slim_content, file_path: "test.slim")
+    result = PackwerkSlimTemplate::SlimConverter.convert(slim_content, file_path: "test.slim")
 
     assert_includes result.ruby_code, "Admin"
   end
 
   def test_line_mapper_tracks_correspondence
-    mapper = PackwerkSlim::LineMapper.new
+    mapper = PackwerkSlimTemplate::LineMapper.new
 
     mapper.add_mapping(ruby_line: 1, slim_line: 5)
     mapper.add_mapping(ruby_line: 3, slim_line: 10)
@@ -37,7 +37,7 @@ class SlimConverterTest < Minitest::Test
   end
 
   def test_line_mapper_handles_unmapped_lines
-    mapper = PackwerkSlim::LineMapper.new
+    mapper = PackwerkSlimTemplate::LineMapper.new
 
     mapper.add_mapping(ruby_line: 1, slim_line: 5)
 
@@ -53,7 +53,7 @@ class SlimConverterTest < Minitest::Test
         p= p.name
     SLIM
 
-    result = PackwerkSlim::SlimConverter.convert(slim_content, file_path: "test.slim")
+    result = PackwerkSlimTemplate::SlimConverter.convert(slim_content, file_path: "test.slim")
 
     assert_includes result.ruby_code, "User"
     assert_includes result.ruby_code, "Order"

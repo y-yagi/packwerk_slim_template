@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module PackwerkSlim
+module PackwerkSlimTemplate
   class Error < StandardError; end
 
   class SlimSyntaxError < Error

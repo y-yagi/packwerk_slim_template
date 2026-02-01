@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in packwerk_slim.gemspec
+# Specify your gem's dependencies in packwerk_slim_template.gemspec
 gemspec
 
 gem "irb"
