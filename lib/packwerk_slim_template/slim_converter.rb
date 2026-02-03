@@ -27,6 +27,8 @@ module PackwerkSlimTemplate
   class SlimConverter
     ConversionResult = Struct.new(:ruby_code, :line_mapper, :ruby_snippets)
 
+    CONTROL_FLOW_CONTINUATIONS = %w[elsif else when rescue ensure].freeze
+
     def self.convert(slim_content, file_path:)
       new(slim_content, file_path).convert
     end
@@ -66,20 +68,20 @@ module PackwerkSlimTemplate
       Slim::Parser.new.call(content)
     end
 
-    def extract_ruby_nodes(node, slim_line = 1)
+    def extract_ruby_nodes(node, slim_line = 1, next_node: nil)
       return unless node.is_a?(Array)
 
       case node.first
       when :multi
-        node[1..].each_with_index { |child, idx| extract_ruby_nodes(child, slim_line + idx) }
+        process_sequence(node[1..], slim_line)
       when :slim
-        handle_slim_node(node, slim_line)
+        handle_slim_node(node, slim_line, next_node: next_node)
       when :html
-        node[1..].each_with_index { |child, idx| extract_ruby_nodes(child, slim_line + idx) }
+        process_sequence(node[1..], slim_line)
       end
     end
 
-    def handle_slim_node(node, slim_line)
+    def handle_slim_node(node, slim_line, next_node: nil)
       case node[1]
       when :output
         # [:slim, :output, escape, code, content]
@@ -90,11 +92,7 @@ module PackwerkSlimTemplate
         has_block_content = nested_nodes&.any? { |child| significant_child_node?(child) }
 
         # Process nested content if present
-        if nested_nodes
-          nested_nodes.each_with_index do |child, idx|
-            extract_ruby_nodes(child, slim_line + idx + 1)
-          end
-        end
+        process_sequence(nested_nodes, slim_line + 1) if nested_nodes
 
         add_ruby_snippet("end", slim_line + (nested_nodes&.length || 0)) if has_block_content
       when :control
@@ -105,11 +103,53 @@ module PackwerkSlimTemplate
         # Process nested content (at index 3)
         if node[3]
           extract_ruby_nodes(node[3], slim_line + 1)
-        end
 
-        # Add closing 'end' for control structures
-        add_ruby_snippet("end", slim_line)
+          if should_close_control_block?(code, next_node)
+            add_ruby_snippet("end", slim_line)
+          end
+        end
       end
+    end
+
+    def process_sequence(nodes, base_line)
+      return unless nodes
+
+      nodes.each_with_index do |child, idx|
+        next_node = next_significant_node(nodes, idx)
+        extract_ruby_nodes(child, base_line + idx, next_node: next_node)
+      end
+    end
+
+    def next_significant_node(nodes, current_index)
+      return nil unless nodes
+
+      (current_index + 1).upto(nodes.length - 1) do |idx|
+        node = nodes[idx]
+        return node unless newline_node?(node)
+      end
+      nil
+    end
+
+    def newline_node?(node)
+      node.is_a?(Array) && node.first == :newline
+    end
+
+    def should_close_control_block?(code, next_node)
+      return false if code.nil? || code.empty?
+
+      !control_flow_continuation?(next_node)
+    end
+
+    def control_flow_continuation?(node)
+      return false unless node.is_a?(Array)
+      return false unless node.first == :slim && node[1] == :control
+
+      keyword = leading_keyword(node[2])
+      CONTROL_FLOW_CONTINUATIONS.include?(keyword)
+    end
+
+    def leading_keyword(code)
+      code.to_s.strip.split(/\s+/, 2).first
     end
 
     def add_ruby_snippet(code, slim_line)

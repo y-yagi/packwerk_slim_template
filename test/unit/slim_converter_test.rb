@@ -59,4 +59,24 @@ class SlimConverterTest < Minitest::Test
     assert_includes result.ruby_code, "Order"
     assert_includes result.ruby_code, "Product"
   end
+
+  def test_convert_handles_if_else_chains
+    slim_content = <<~SLIM
+      - if Admin.authorized?
+        = AdminDashboard.render
+      - elsif Feature.enabled?
+        = FeatureDashboard.render
+      - else
+        = GuestDashboard.render
+    SLIM
+
+    result = PackwerkSlimTemplate::SlimConverter.convert(slim_content, file_path: "conditional.slim")
+
+    ruby_parser = Packwerk::Parsers::Ruby.new
+    ast = ruby_parser.call(io: StringIO.new(result.ruby_code), file_path: "conditional.slim")
+
+    assert_kind_of Parser::AST::Node, ast
+    assert_includes result.ruby_code, "elsif"
+    assert_includes result.ruby_code, "else"
+  end
 end
