@@ -19,6 +19,7 @@ class ParserTest < Minitest::Test
 
   def test_call_handles_partial_ruby_ast
     slim_content = <<~SLIM
+      - # This is a coment
       = form_with(model: author) do |form|
         div
           = form.label :name, style: "display: block"

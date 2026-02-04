@@ -86,7 +86,7 @@ module PackwerkSlimTemplate
       when :output
         # [:slim, :output, escape, code, content]
         code = node[3]
-        add_ruby_snippet(code, slim_line) if code && !code.empty?
+        add_ruby_snippet(code, slim_line) if code && !code.empty? && !comment_code?(code)
 
         nested_nodes = node.length > 4 ? node[4..] : nil
         has_block_content = nested_nodes&.any? { |child| significant_child_node?(child) }
@@ -98,6 +98,7 @@ module PackwerkSlimTemplate
       when :control
         # [:slim, :control, code, content]
         code = node[2]
+        return if comment_code?(code)
         add_ruby_snippet(code, slim_line) if code && !code.empty?
 
         # Process nested content (at index 3)
@@ -109,6 +110,10 @@ module PackwerkSlimTemplate
           end
         end
       end
+    end
+
+    def comment_code?(code)
+      code.to_s.strip.start_with?("#")
     end
 
     def process_sequence(nodes, base_line)
