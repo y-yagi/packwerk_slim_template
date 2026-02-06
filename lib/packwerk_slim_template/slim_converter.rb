@@ -103,9 +103,10 @@ module PackwerkSlimTemplate
 
         # Process nested content (at index 3)
         if node[3]
+          has_block_content = significant_child_node?(node[3])
           extract_ruby_nodes(node[3], slim_line + 1)
 
-          if should_close_control_block?(code, next_node)
+          if has_block_content && should_close_control_block?(code, next_node)
             add_ruby_snippet("end", slim_line)
           end
         end
