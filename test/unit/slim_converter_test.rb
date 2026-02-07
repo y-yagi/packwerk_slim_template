@@ -79,4 +79,36 @@ class SlimConverterTest < Minitest::Test
     assert_includes result.ruby_code, "elsif"
     assert_includes result.ruby_code, "else"
   end
+
+  def test_convert_adds_block_delimiter_for_output_with_children
+    slim_content = <<~SLIM
+      = link_to root_path, class: 'logo'
+        span Logo
+    SLIM
+
+    result = PackwerkSlimTemplate::SlimConverter.convert(slim_content, file_path: "block_output.slim")
+
+    assert_includes result.ruby_code, "link_to root_path, class: 'logo' do"
+
+    ruby_parser = Packwerk::Parsers::Ruby.new
+    ast = ruby_parser.call(io: StringIO.new(result.ruby_code), file_path: "block_output.slim")
+    assert_kind_of Parser::AST::Node, ast
+  end
+
+  def test_convert_does_not_duplicate_existing_block_delimiter
+    slim_content = <<~SLIM
+      = link_to(root_path) do |link|
+        span= link
+    SLIM
+
+    result = PackwerkSlimTemplate::SlimConverter.convert(slim_content, file_path: "existing_block.slim")
+
+    link_lines = result.ruby_code.lines.select { |line| line.include?("link_to") }
+    assert link_lines.any? { |line| line.include?("do |link|") }
+    assert link_lines.none? { |line| line.include?("do do") }
+
+    ruby_parser = Packwerk::Parsers::Ruby.new
+    ast = ruby_parser.call(io: StringIO.new(result.ruby_code), file_path: "existing_block.slim")
+    assert_kind_of Parser::AST::Node, ast
+  end
 end

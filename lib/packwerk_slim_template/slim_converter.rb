@@ -86,10 +86,13 @@ module PackwerkSlimTemplate
       when :output
         # [:slim, :output, escape, code, content]
         code = node[3]
-        add_ruby_snippet(code, slim_line) if code && !code.empty? && !comment_code?(code)
-
         nested_nodes = node.length > 4 ? node[4..] : nil
         has_block_content = nested_nodes&.any? { |child| significant_child_node?(child) }
+
+        if code && !code.empty? && !comment_code?(code)
+          code = ensure_block_delimiter(code) if has_block_content
+          add_ruby_snippet(code, slim_line)
+        end
 
         # Process nested content if present
         process_sequence(nested_nodes, slim_line + 1) if nested_nodes
@@ -179,6 +182,19 @@ module PackwerkSlimTemplate
       else
         true
       end
+    end
+
+    def ensure_block_delimiter(code)
+      newline = code.end_with?("\n")
+      stripped = code.rstrip
+      detection_target = stripped.sub(/\s+#.*\z/, "")
+
+      return code if detection_target.empty?
+      return code if detection_target.match?(/\{\s*\z/)
+      return code if detection_target.match?(/\bdo(\s*\|.*\|)?\s*\z/)
+
+      updated = "#{stripped} do"
+      newline ? "#{updated}\n" : updated
     end
   end
 end
