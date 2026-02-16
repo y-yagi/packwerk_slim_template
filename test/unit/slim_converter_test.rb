@@ -159,6 +159,23 @@ class SlimConverterTest < Minitest::Test
     assert_kind_of Parser::AST::Node, ast
   end
 
+  def test_convert_completes_trailing_keyword_arguments
+    slim_content = <<~SLIM
+      = render 'label_tag', name:
+
+      div
+        = select_tag name
+    SLIM
+
+    result = PackwerkSlimTemplate::SlimConverter.convert(slim_content, file_path: "dangling_keyword.slim")
+
+    assert_includes result.ruby_code, "render 'label_tag', name: nil"
+
+    ruby_parser = Packwerk::Parsers::Ruby.new
+    ast = ruby_parser.call(io: StringIO.new(result.ruby_code), file_path: "dangling_keyword.slim")
+    assert_kind_of Parser::AST::Node, ast
+  end
+
   def test_all_fixture_templates_are_parsable
     fixture_glob = File.expand_path("../fixtures/**/*.slim", __dir__)
     slim_files = Dir.glob(fixture_glob)

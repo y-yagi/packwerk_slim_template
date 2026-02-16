@@ -245,6 +245,7 @@ module PackwerkSlimTemplate
       leading_whitespace = code[/\A\s*/] || ""
       trimmed = code.lstrip
       sanitized = strip_unbalanced_quote_prefix(trimmed)
+      sanitized = ensure_keyword_argument_value(sanitized)
 
       return code if sanitized == trimmed
 
@@ -261,6 +262,21 @@ module PackwerkSlimTemplate
       return code if remainder.include?(quote)
 
       remainder.lstrip
+    end
+
+    def ensure_keyword_argument_value(code)
+      return code if code.empty?
+
+      has_trailing_newline = code.end_with?("\n")
+      stripped = code.rstrip
+      return code if stripped.empty?
+
+      if stripped.match?(/(?:\b|::)[A-Za-z_]\w*:\z/)
+        updated = "#{stripped} nil"
+        return has_trailing_newline ? "#{updated}\n" : updated
+      end
+
+      code
     end
 
     def extract_interpolation_expressions(raw_code)
