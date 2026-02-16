@@ -142,6 +142,23 @@ class SlimConverterTest < Minitest::Test
     assert_kind_of Parser::AST::Node, ast
   end
 
+  def test_convert_handles_embedded_ruby_filters
+    slim_content = <<~SLIM
+      ruby:
+        foo = find_foo
+
+      = foo.name
+    SLIM
+
+    result = PackwerkSlimTemplate::SlimConverter.convert(slim_content, file_path: "embedded_ruby.slim")
+
+    assert_includes result.ruby_code, "foo = find_foo"
+
+    ruby_parser = Packwerk::Parsers::Ruby.new
+    ast = ruby_parser.call(io: StringIO.new(result.ruby_code), file_path: "embedded_ruby.slim")
+    assert_kind_of Parser::AST::Node, ast
+  end
+
   def test_all_fixture_templates_are_parsable
     fixture_glob = File.expand_path("../fixtures/**/*.slim", __dir__)
     slim_files = Dir.glob(fixture_glob)

@@ -131,6 +131,21 @@ module PackwerkSlimTemplate
         end
       when :text
         extract_text_interpolations(node[3], slim_line)
+      when :embedded
+        handle_embedded_node(node, slim_line)
+      end
+    end
+
+    def handle_embedded_node(node, slim_line)
+      engine = node[2]
+      return unless engine.to_s == "ruby"
+
+      body = node[3]
+      embedded_lines = extract_embedded_ruby_lines(body)
+      embedded_lines.each do |code_line, offset|
+        next if code_line.empty?
+
+        add_ruby_snippet(code_line, slim_line + offset)
       end
     end
 
@@ -287,6 +302,62 @@ module PackwerkSlimTemplate
       end
 
       expressions
+    end
+
+    def extract_embedded_ruby_lines(node)
+      text = flatten_text_content(node)
+      return [] if text.empty?
+
+      raw_lines = []
+      line_offset = 0
+
+      text.split("\n", -1).each_with_index do |segment, idx|
+        line_offset += 1 if idx.positive?
+        trimmed = segment.rstrip
+        next if trimmed.strip.empty?
+
+        raw_lines << { text: trimmed, offset: line_offset }
+      end
+
+      return [] if raw_lines.empty?
+
+      min_indent = raw_lines.map { |entry| leading_whitespace(entry[:text]) }.min || 0
+
+      raw_lines.map do |entry|
+        normalized = entry[:text]
+        normalized = normalized[min_indent..] || "" if min_indent.positive?
+        [normalized.rstrip, entry[:offset]]
+      end
+    end
+
+    def flatten_text_content(node)
+      return "" if node.nil?
+      return node.to_s unless node.is_a?(Array)
+
+      case node.first
+      when :multi
+        node[1..].map { |child| flatten_text_content(child) }.join
+      when :newline
+        "\n"
+      when :static
+        node[1].to_s
+      when :slim
+        subtype = node[1]
+        case subtype
+        when :text
+          flatten_text_content(node[3])
+        when :interpolate
+          node[2].to_s
+        else
+          node[2..].map { |child| flatten_text_content(child) }.join
+        end
+      else
+        node[1..].map { |child| flatten_text_content(child) }.join
+      end
+    end
+
+    def leading_whitespace(text)
+      (text[/^\s*/] || "").length
     end
 
     def ensure_block_delimiter(code)
