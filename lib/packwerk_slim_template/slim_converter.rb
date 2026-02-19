@@ -390,7 +390,8 @@ module PackwerkSlimTemplate
       return nil if code.to_s.empty?
 
       stripped = code.rstrip
-      detection_target = stripped.sub(/\s+#.*\z/, "")
+      # Remove Ruby comments, but not color codes like `#xxx`.
+      detection_target = stripped.sub(/\s+#\s.*\z/, "")
       return nil if detection_target.empty?
 
       return :curly if detection_target.match?(/\{\s*\z/)
