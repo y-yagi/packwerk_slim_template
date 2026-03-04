@@ -125,7 +125,7 @@ module PackwerkSlimTemplate
           has_block_content = significant_child_node?(node[3])
           extract_ruby_nodes(node[3], slim_line + 1)
 
-          if has_block_content && should_close_control_block?(code, next_node)
+          if (has_block_content || requires_block_close?(code)) && should_close_control_block?(code, next_node)
             add_ruby_snippet("end", slim_line)
           end
         end
@@ -180,6 +180,11 @@ module PackwerkSlimTemplate
       return false if code.nil? || code.empty?
 
       !control_flow_continuation?(next_node)
+    end
+
+    def requires_block_close?(code)
+      keyword = leading_keyword(code)
+      %w[if unless while until for begin case].include?(keyword)
     end
 
     def control_flow_continuation?(node)

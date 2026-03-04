@@ -176,6 +176,23 @@ class SlimConverterTest < Minitest::Test
     assert_kind_of Parser::AST::Node, ast
   end
 
+  def test_convert_handles_with_empty_if
+    slim_content = <<~SLIM
+      - if "true"
+      - if User.authorized?
+        = UserDashboard.render
+      - else
+        = GuestDashboard.render
+    SLIM
+
+    result = PackwerkSlimTemplate::SlimConverter.convert(slim_content, file_path: "conditional.slim")
+
+    ruby_parser = Packwerk::Parsers::Ruby.new
+    ast = ruby_parser.call(io: StringIO.new(result.ruby_code), file_path: "conditional.slim")
+
+    assert_kind_of Parser::AST::Node, ast
+  end
+
   def test_all_fixture_templates_are_parsable
     fixture_glob = File.expand_path("../fixtures/**/*.slim", __dir__)
     slim_files = Dir.glob(fixture_glob)
