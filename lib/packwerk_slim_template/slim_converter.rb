@@ -75,20 +75,20 @@ module PackwerkSlimTemplate
       end.join
     end
 
-    def extract_ruby_nodes(node, slim_line = 1, next_node: nil)
+    def extract_ruby_nodes(node, slim_line = 1, next_node: nil, case_body: false)
       return unless node.is_a?(Array)
 
       case node.first
       when :multi
-        process_sequence(node[1..], slim_line)
+        process_sequence(node[1..], slim_line, case_body: case_body)
       when :slim
-        handle_slim_node(node, slim_line, next_node: next_node)
+        handle_slim_node(node, slim_line, next_node: next_node, case_body: case_body)
       when :html
         process_sequence(node[1..], slim_line)
       end
     end
 
-    def handle_slim_node(node, slim_line, next_node: nil)
+    def handle_slim_node(node, slim_line, next_node: nil, case_body: false)
       case node[1]
       when :output
         # [:slim, :output, escape, code, content]
@@ -123,6 +123,9 @@ module PackwerkSlimTemplate
         has_block_content = node[3] && significant_child_node?(node[3])
         keyword = leading_keyword(code.to_s)
         is_continuation = CONTROL_FLOW_CONTINUATIONS.include?(keyword)
+        # Continuations inside a case body (when/else) must NOT emit `end`;
+        # the parent `case` node is responsible for closing.
+        is_closing_continuation = is_continuation && !case_body
         if code && !code.empty? && has_block_content &&
            !requires_block_close?(code) &&
            !is_continuation &&
@@ -132,12 +135,18 @@ module PackwerkSlimTemplate
 
         add_ruby_snippet(code, slim_line) if code && !code.empty?
 
-        # Process nested content (at index 3)
-        extract_ruby_nodes(node[3], slim_line + 1) if node[3]
+        # When this node is a `case`, its children (when/else) must not emit
+        # their own `end`; propagate case_body: true so they know.
+        child_case_body = keyword == "case"
+        extract_ruby_nodes(node[3], slim_line + 1, case_body: child_case_body) if node[3]
 
-        # Emit `end` for block-opening keywords and for continuation keywords (else/elsif/ensure/rescue)
+        # Emit `end` for block-opening keywords and for continuation keywords
         # that terminate the chain (i.e., next node is not another continuation).
-        if (has_block_content || requires_block_close?(code) || is_continuation) && should_close_control_block?(code, next_node)
+        # Continuations inside a case body (when/else) never emit `end` –
+        # the parent `case` node is solely responsible for closing.
+        if !(is_continuation && case_body) &&
+           (has_block_content || requires_block_close?(code) || is_closing_continuation) &&
+           should_close_control_block?(code, next_node)
           add_ruby_snippet("end", slim_line)
         end
       when :text
@@ -164,12 +173,12 @@ module PackwerkSlimTemplate
       code.to_s.strip.start_with?("#")
     end
 
-    def process_sequence(nodes, base_line)
+    def process_sequence(nodes, base_line, case_body: false)
       return unless nodes
 
       nodes.each_with_index do |child, idx|
         next_node = next_significant_node(nodes, idx)
-        extract_ruby_nodes(child, base_line + idx, next_node: next_node)
+        extract_ruby_nodes(child, base_line + idx, next_node: next_node, case_body: case_body)
       end
     end
 
