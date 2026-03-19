@@ -122,9 +122,10 @@ module PackwerkSlimTemplate
         # Pre-check block content to add `do` for method-style blocks (e.g. `2.times`)
         has_block_content = node[3] && significant_child_node?(node[3])
         keyword = leading_keyword(code.to_s)
+        is_continuation = CONTROL_FLOW_CONTINUATIONS.include?(keyword)
         if code && !code.empty? && has_block_content &&
            !requires_block_close?(code) &&
-           !CONTROL_FLOW_CONTINUATIONS.include?(keyword) &&
+           !is_continuation &&
            block_delimiter_for(code).nil?
           code = ensure_block_delimiter(code)
         end
@@ -132,12 +133,12 @@ module PackwerkSlimTemplate
         add_ruby_snippet(code, slim_line) if code && !code.empty?
 
         # Process nested content (at index 3)
-        if node[3]
-          extract_ruby_nodes(node[3], slim_line + 1)
+        extract_ruby_nodes(node[3], slim_line + 1) if node[3]
 
-          if (has_block_content || requires_block_close?(code)) && should_close_control_block?(code, next_node)
-            add_ruby_snippet("end", slim_line)
-          end
+        # Emit `end` for block-opening keywords and for continuation keywords (else/elsif/ensure/rescue)
+        # that terminate the chain (i.e., next node is not another continuation).
+        if (has_block_content || requires_block_close?(code) || is_continuation) && should_close_control_block?(code, next_node)
+          add_ruby_snippet("end", slim_line)
         end
       when :text
         extract_text_interpolations(node[3], slim_line)
