@@ -118,11 +118,21 @@ module PackwerkSlimTemplate
         # [:slim, :control, code, content]
         code = node[2]
         return if comment_code?(code)
+
+        # Pre-check block content to add `do` for method-style blocks (e.g. `2.times`)
+        has_block_content = node[3] && significant_child_node?(node[3])
+        keyword = leading_keyword(code.to_s)
+        if code && !code.empty? && has_block_content &&
+           !requires_block_close?(code) &&
+           !CONTROL_FLOW_CONTINUATIONS.include?(keyword) &&
+           block_delimiter_for(code).nil?
+          code = ensure_block_delimiter(code)
+        end
+
         add_ruby_snippet(code, slim_line) if code && !code.empty?
 
         # Process nested content (at index 3)
         if node[3]
-          has_block_content = significant_child_node?(node[3])
           extract_ruby_nodes(node[3], slim_line + 1)
 
           if (has_block_content || requires_block_close?(code)) && should_close_control_block?(code, next_node)
